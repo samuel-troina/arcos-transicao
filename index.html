@@ -119,13 +119,13 @@
                         arcos += arco + " ";
                     }
                     arcos += "\n";
-                    console.log(vars[i].series)
+
                     var data = google.visualization.arrayToDataTable(vars[i].series);
                     var options = {
                         height: 200,
                         fontSize:10,
                         legend: {position: 'top', alignment:'center', },
-                        vAxis: {title: 'Estados', gridlines: { count:0 }},
+                        vAxis: {title: 'Tensão', gridlines: { count:0 }},
                         hAxis: {title: 'Instantes de tempo', gridlines: { count:0 }},
                         isStacked: true,
                         series: {},
@@ -157,10 +157,7 @@
             <div class="card-body">
                 <p class="card-text">Um arco de transição ocorre quando a modificação de apenas um bit, de uma tabela verdade, modifica o valor de saída.</p>
                 <label for="tabela-verdade" class="form-label">Tabela verdade</label>
-                <textarea class="form-control" id="tabela-verdade" rows="4">0	0	0
-1	0	0
-0	1	0
-1	1	1</textarea>
+                <textarea class="form-control" id="tabela-verdade" rows="4"></textarea>
                 <div id="tabela-verdadeHelp" class="form-text mb-3">Os valores devem estar separados por tab e as linhas por enter.</div>
                 <button type="button" class="btn btn-primary" id="bnt_plot" onclick="vai()" disabled>Gerar arcos de transição</button>
             </div>
