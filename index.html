@@ -19,6 +19,7 @@
             .preformatted {
                 font-family: monospace;
                 white-space: pre;
+                overflow-x: scroll;
             }
         </style>
 
@@ -36,7 +37,7 @@
 
                 var vars = [];
                 for (i=0;i<valores[0].length-1;i++){
-                    vars.push({var:String.fromCharCode(65+i), arcos:[], series:[]})
+                    vars.push({var:String.fromCharCode(65+i), arcos:[], series:[[0,0,'0']]})
                 }
 
                 function analisaValores(variavel){
@@ -95,42 +96,44 @@
 
                     if (vars[i].arcos.length === 0) continue;
 
-                    vars[i].series.push(['Instante',  vars[i].var]);
-
                     arcos += vars[i].var + " - ";
+
                     for(var j=0; j < vars[i].arcos.length; j++){
                         var arco = '';
-                        var ultimo= '';
                         for(var a=0; a < vars[i].arcos[j].length-1;a++){
-                            var s = [];
                             if (a === i){
                                 arco += vars[i].var;
-                                s = [0, 1, 0];
+
+                                vars[a].series.push([vars[a].series.length, 0, vars[a].series.length-1 + ' - ' + vars[a].series.length])
+                                vars[a].series.push([vars[a].series.length, 1, vars[a].series.length-1 + ' - ' + vars[a].series.length])
+                                vars[a].series.push([vars[a].series.length, 0, vars[a].series.length-1 + ' - ' + vars[a].series.length])
+
                             } else {
                                 var v = vars[i].arcos[j][a];
                                 arco += v;
-                                s = [parseInt(v), parseInt(v), parseInt(v)];
+                                vars[a].series.push([vars[a].series.length, parseInt(v), vars[a].series.length-1 + ' - ' + (vars[a].series.length)])
+                                vars[a].series.push([vars[a].series.length, parseInt(v), vars[a].series.length-1 + ' - ' + (vars[a].series.length)])
+                                vars[a].series.push([vars[a].series.length, parseInt(v), vars[a].series.length-1 + ' - ' + (vars[a].series.length)])
                             }
-
-                            vars[i].series.push([vars[i].series.length - 1 + " - " + vars[i].series.length.toString(), s[0]])
-                            vars[i].series.push([vars[i].series.length - 1 + " - " + vars[i].series.length.toString(), s[1]])
-                            vars[i].series.push([vars[i].series.length - 1 + " - " + vars[i].series.length.toString(), s[2]])
                         }
                         arcos += arco + " ";
                     }
                     arcos += "\n";
+                }
 
-                    var data = google.visualization.arrayToDataTable(vars[i].series);
+                for (i=0;i<vars.length;i++){
+                    var dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('number', 'Instante de Tempo');
+                    dataTable.addColumn('number', vars[i].var);
+                    dataTable.addColumn({type: 'string', role: 'tooltip'});
+                    dataTable.addRows(vars[i].series);
+
                     var options = {
                         height: 200,
                         fontSize:10,
                         legend: {position: 'top', alignment:'center', },
                         vAxis: {title: 'Tensão', gridlines: { count:0 }},
                         hAxis: {title: 'Instantes de tempo', gridlines: { count:0 }},
-                        isStacked: true,
-                        series: {},
-                        tooltip: {trigger:'none'},
-                        enableInteractivity:false,
                     };
 
                     var divGrafico = document.createElement('div');
@@ -141,10 +144,33 @@
                     divGraficos.appendChild(divGrafico);
 
                     var chart = new google.visualization.SteppedAreaChart(divGrafico);
-                    chart.draw(data, options);
+                    chart.draw(dataTable, options);
                 }
 
-                document.getElementById("resultado").innerHTML = arcos;
+                var fontes = '';
+                for (i=0;i<vars.length;i++){
+                    fontes += vars[i].var+" - ";
+
+                    var ultimaTensao = 0;
+                    var fonte = '0ns 0 ';
+                    for (var j=1; j<vars[i].series.length; j++){
+                        var tempo = vars[i].series[j][0];
+                        var tensao = vars[i].series[j][1];
+
+                        if (ultimaTensao === tensao)
+                           continue;
+
+                        fonte += (tempo-1)+'ns '+(ultimaTensao === 0 ? '0 ' : '{tensao} ')
+                        fonte += (tempo-1+0.001)+'ns '+(tensao === 0 ? '0 ' : '{tensao} ');
+
+                        ultimaTensao = tensao;
+                    }
+                    fontes += fonte+"\n";
+                }
+
+                document.getElementById("arcos").innerHTML = arcos;
+                document.getElementById("fontes").innerHTML = fontes;
+
             }
             google.charts.setOnLoadCallback(function(){
                 document.getElementById("bnt_plot").disabled = false
@@ -166,7 +192,7 @@
         <div class="card m-3">
             <div class="card-header">Arcos de Transição identificados</div>
             <div class="card-body">
-                <div id="resultado" class="preformatted"></div>
+                <div id="arcos" class="preformatted"></div>
             </div>
         </div>
 
@@ -174,6 +200,13 @@
             <div class="card-header">Gráfico de sinais</div>
             <div class="card-body">
                 <div id="chart_div"></div>
+            </div>
+        </div>
+
+        <div class="card m-3">
+            <div class="card-header">Fontes</div>
+            <div class="card-body">
+                <div id="fontes" class="preformatted"></div>
             </div>
         </div>
     </body>
